@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestor de firmas — B&Q</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js"></script>
+<style>
+:root{--ink:#1b2a41;--mut:#5f6f86;--line:#d9e0ea;--bg:#f1f4f8;--card:#fff;--acc:#2f5d9e;--ok:#2f7d5b;--wr:#94680a;--or:#b4531c;--er:#a63a3a;--okb:#e0f0e8;--wrb:#fbf0cc;--orb:#fde6d4;--erb:#f6dede;--onacc:#fff}
+:root[data-t=dark]{--ink:#e4eaf4;--mut:#94a3bb;--line:#26334d;--bg:#0f1726;--card:#172136;--acc:#6c9bd8;--ok:#5fb48f;--wr:#e0b44c;--or:#e8955a;--er:#e07a7a;--okb:#16352a;--wrb:#3a3012;--orb:#3d2616;--erb:#3d1c1f;--onacc:#0b1424}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 Geist,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:10px 24px}
+.brand{font-weight:600;font-size:16px;margin-right:8px;display:flex;gap:10px;align-items:center}.logo{width:36px;height:36px;border-radius:10px;background:var(--acc);color:var(--onacc);display:grid;place-items:center;font-size:12px;letter-spacing:-.3px}.brand small{display:block;font-weight:400;color:var(--mut);font-size:11px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+.tab{border:0;background:none;padding:8px 12px;border-radius:8px;color:var(--mut);font:inherit;cursor:pointer}
+.tab.on{background:var(--ink);color:var(--bg)}
+#q{flex:1;min-width:160px;max-width:340px;margin-left:auto}
+input,select,textarea,.btn{font:inherit;color:inherit}
+input,select,textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card);width:100%}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}.btn.p{background:var(--acc);border-color:var(--acc);color:var(--onacc)}.btn.d{color:var(--er)}
+.btn.s{padding:4px 8px;font-size:12px}
+main{max-width:1200px;margin:0 auto;padding:24px}
+.ks{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.k span{color:var(--mut)}.k b{font-size:30px;font-weight:600;line-height:1.1}
+.k.ok b{color:var(--ok)}.k.wr b{color:var(--wr)}.k.er b{color:var(--er)}.k.or b{color:var(--or)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:20px}
+h2,h3{margin:0 0 12px}h3{font-size:15px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.bar label{display:flex;flex-direction:column;gap:3px;color:var(--mut);font-size:12px;min-width:140px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-weight:500;color:var(--mut);font-size:12px;white-space:nowrap}
+th[data-a=sort]{cursor:pointer;color:var(--ink)}
+td small{display:block;color:var(--mut);font-size:12px}
+.b{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:500}
+.b.VIGENTE{background:var(--okb);color:var(--ok)}.b.POR_VENCER{background:var(--wrb);color:var(--wr)}.b.VENCIDO{background:var(--erb);color:var(--er)}.b.URGENTE{background:var(--orb);color:var(--or)}
+.pb{height:4px;background:var(--line);border-radius:4px;margin-top:5px;min-width:90px}.pb i{display:block;height:100%;border-radius:4px;background:var(--acc)}
+.act{display:flex;gap:4px;flex-wrap:wrap}
+.mt{color:var(--mut)}.empty{padding:28px;text-align:center;color:var(--mut)}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.chip{display:inline-block;margin:6px 6px 0 0;padding:2px 9px;border-radius:99px;font-size:12px;cursor:pointer}
+.ov{position:fixed;inset:0;background:rgba(20,33,61,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto;z-index:20}
+.mo{background:var(--card);border-radius:14px;padding:22px;width:100%;max-width:640px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.g label,.full{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.row{display:flex;gap:8px;justify-content:flex-end}.note{font-size:12px;color:var(--mut)}
+.warn{background:var(--wrb);color:var(--wr);padding:10px 12px;border-radius:8px;margin-bottom:16px}
+textarea{min-height:120px;resize:vertical}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;z-index:50;display:none}
+header{background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(8px);transition:box-shadow .25s}
+header.sc{box-shadow:0 8px 20px -14px rgba(20,45,90,.45)}
+#prog{position:fixed;top:0;left:0;height:2px;width:100%;background:var(--acc);transform-origin:0 50%;transform:scaleX(0);z-index:30}
+.btn{transition:border-color .15s,transform .1s}.btn:active{transform:scale(.97)}
+.tab{transition:background .2s,color .2s}
+.k{transition:transform .2s,border-color .2s,box-shadow .2s}.k:hover{transform:translateY(-2px);border-color:var(--acc);box-shadow:0 10px 22px -16px rgba(30,60,120,.55)}
+tbody tr{transition:background .15s}tbody tr:hover{background:color-mix(in srgb,var(--acc) 6%,transparent)}
+.pb i{transition:width .6s}
+.rv{opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease}.rv.in{opacity:1;transform:none}
+.cb i{transform-origin:bottom;transform:scaleY(0);transition:transform .7s cubic-bezier(.2,.7,.2,1)}.ch.in .cb i{transform:scaleY(1)}
+@keyframes vw{from{opacity:0}to{opacity:1}}@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+#main{animation:vw .25s ease}.ov{animation:vw .15s ease}.mo{animation:pop .2s ease}
+.et{padding:4px 6px;min-width:130px}.ch{display:flex;gap:6px;align-items:flex-end;height:160px}.cb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:12px}.cb i{width:100%;background:var(--acc);border-radius:4px 4px 0 0;min-height:2px}.cb span{color:var(--mut);margin-top:4px}
+@media(max-width:700px){header{padding:10px 14px}main{padding:14px}.g{grid-template-columns:1fr}.hm{display:none}table,tbody,tr,td{display:block}thead{display:none}tr{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:10px}td{border:0;padding:4px 6px}}
+@media print{:root[data-t]{--ink:#14213d;--mut:#5b6678;--line:#dde2ea;--card:#fff;--bg:#fff}header,.bar,.act,.btn,.k{display:none!important}body{background:var(--card)}.card{border:0;padding:0}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.rv{opacity:1;transform:none}.cb i{transform:none}}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<header>
+  <div class="brand"><span class="logo">B&amp;Q</span><span>Gestor de firmas<small>B&amp;Q Servicios Contables</small></span></div>
+  <nav>
+    <button class="tab" data-a="nav" data-v="panel">Panel</button>
+    <button class="tab" data-a="nav" data-v="boveda">Bóveda</button>
+    <button class="tab" data-a="nav" data-v="clientes">Clientes</button>
+    <button class="tab" data-a="nav" data-v="recordatorios">Recordatorios</button>
+    <button class="tab" data-a="nav" data-v="datos">Respaldo</button>
+  </nav>
+  <input id="q" type="search" placeholder="Buscar nombre, RFC, correo o serie (Ctrl+K)" aria-label="Buscar">
+  <button class="btn" data-a="tema" aria-label="Cambiar tema claro u oscuro">◐</button>
+  <button class="btn p" data-a="new">Agregar firma</button>
+</header>
+<main id="main"></main>
+<div id="modal"></div>
+<div id="toast" role="status"></div>
+<script>
+const KEY='firmaCustodia_certs',CFG='firmaCustodia_cfg',$=s=>document.querySelector(s);
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const DEF={umbral:30,orden:'venc_asc',estado:'TODOS',tipo:'TODOS',persona:'TODOS',rango:'TODOS',respaldo:'',etapa:'TODOS',tema:'',
+ asunto:'[B&Q] Tu {{TIPO}} vence en {{DIAS}} días',
+ mail:'Hola {{NOMBRE}},\n\nTu {{TIPO}} con RFC {{RFC}} (serie {{SERIE}}) vence el {{FECHA}}. Te quedan {{DIAS}} días.\n\nPara renovarla a tiempo, responde este correo y agendamos tu cita.\n\nB&Q Servicios Contables',
+ wa:'Hola {{NOMBRE}}, tu {{TIPO}} (RFC {{RFC}}) vence el {{FECHA}}, en {{DIAS}} días. ¿La renovamos esta semana? — B&Q Servicios Contables'};
+let certs=load(KEY,[]).map(c=>{delete c.diasRestantes;delete c.estado;return c});
+let cfg={...DEF,...load(CFG,{})},vista='panel',q='';
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(certs));localStorage.setItem(CFG,JSON.stringify(cfg))};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500)};
+const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const D=s=>new Date(s+'T12:00:00');
+const fmt=s=>s?D(s).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const hoy=()=>{const d=new Date();d.setHours(12,0,0,0);return d};
+const dias=c=>Math.round((D(c.fechaVencimiento)-hoy())/864e5);
+const estado=c=>{const d=dias(c);return d<0?'VENCIDO':d<=7?'URGENTE':d<=cfg.umbral?'POR_VENCER':'VIGENTE'};
+const ETQ={VIGENTE:'Vigente',POR_VENCER:'Por vencer',VENCIDO:'Vencida',URGENTE:'Urgente'};
+const diasTxt=c=>{const d=dias(c);return d<0?`Venció hace ${-d} d`:d===0?'Vence hoy':`${d} d`};
+const ETAPAS={por_contactar:'Por contactar',contactado:'Contactado',cita:'Cita agendada',renovada:'Renovada'};
+const IMP={'e.firma':'Sin e.firma no puedes presentar declaraciones ni hacer trámites en el SAT.',CSD:'Sin CSD vigente no puedes emitir facturas (CFDI).',Sello:'Sin sello vigente se detiene la firma de documentos.'};
+const money=n=>n.toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0});
+const hist=(c,t)=>{c.historial=[{f:iso(new Date()),t},...(c.historial||[])].slice(0,40)};
+const applyTema=()=>{document.documentElement.dataset.t=cfg.tema||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')};
+function cambiarEtapa(id,v){const c=certs.find(x=>x.id===id);if(!c)return;
+ if(v==='renovada'){const nf=prompt('Nueva fecha de vencimiento (AAAA-MM-DD):');
+  if(!nf||!/^\d{4}-\d{2}-\d{2}$/.test(nf)||nf<=c.fechaVencimiento){toast('Fecha no válida. Debe ser posterior al vencimiento actual.');render();return}
+  hist(c,`Renovada: vencía el ${fmt(c.fechaVencimiento)}, nueva vigencia hasta ${fmt(nf)}`);c.fechaEmision=iso(new Date());c.fechaVencimiento=nf;c.etapa='por_contactar';toast('Renovación registrada.')}
+ else{c.etapa=v;hist(c,'Etapa: '+ETAPAS[v])}
+ save();render()}
+function demo(){const f=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+ [['Ferretería La Esperanza SA de CV','FLE120304AB1','MORAL','CSD',-12,'por_contactar',1800],['Transportes del Valle SA de CV','TVA090715KP4','MORAL','e.firma',6,'contactado',1200],['María Elena Duarte Ruiz','DURM800912H45','FISICA','e.firma',14,'cita',900],['Clínica Dental Sonrisa SC','CDS150220MN7','MORAL','CSD',27,'por_contactar',1800],['Ernesto Villalobos Cota','VICE750430LR2','FISICA','CSD',41,'contactado',900],['Agrícola Mexicali del Norte SPR','AMN110908QX3','MORAL','e.firma',88,'por_contactar',1200],['Lucía Ramírez Soto','RASL900117T66','FISICA','e.firma',170,'por_contactar',900],['Panadería El Trigal SA de CV','PTR130525HJ9','MORAL','CSD',250,'por_contactar',1800],['Constructora Cachanilla SA de CV','CCA070311PD8','MORAL','e.firma',335,'por_contactar',1200]]
+ .forEach((x,i)=>certs.push({id:String(Date.now()+i),nombre:x[0],titular:x[0].toUpperCase(),rfc:x[1],tipoPersona:x[2],tipoCert:x[3],fechaEmision:f(x[4]-1460),fechaVencimiento:f(x[4]),serie:String(30001000000500000000+i*137),emailCliente:x[1].slice(0,4).toLowerCase()+'@ejemplo.mx',whatsapp:'6861234567',etapa:x[5],cobro:x[6],recordatoriosEnviados:0}));
+ save();render();toast('Datos de ejemplo cargados. Usa Respaldo → Vaciar bóveda para borrarlos.')}
+const ORD={
+ venc_asc:(a,b)=>a.fechaVencimiento.localeCompare(b.fechaVencimiento),
+ venc_desc:(a,b)=>b.fechaVencimiento.localeCompare(a.fechaVencimiento),
+ nombre_asc:(a,b)=>a.nombre.localeCompare(b.nombre,'es',{sensitivity:'base'}),
+ nombre_desc:(a,b)=>b.nombre.localeCompare(a.nombre,'es',{sensitivity:'base'}),
+ rfc_asc:(a,b)=>a.rfc.localeCompare(b.rfc),
+ alta_desc:(a,b)=>(Number(b.id)||0)-(Number(a.id)||0),
+ alta_asc:(a,b)=>(Number(a.id)||0)-(Number(b.id)||0)};
+const ORD_ETQ={venc_asc:'Vencimiento: más próximo primero',venc_desc:'Vencimiento: más lejano primero',nombre_asc:'Nombre A → Z',nombre_desc:'Nombre Z → A',rfc_asc:'RFC',alta_desc:'Agregadas recientemente',alta_asc:'Agregadas primero'};
+function lista(){const n=norm(q);return certs.filter(c=>{
+ if(n&&!norm([c.rfc,c.nombre,c.emailCliente,c.serie].join(' ')).includes(n))return false;
+ if(cfg.estado!=='TODOS'&&estado(c)!==cfg.estado)return false;
+ if(cfg.etapa!=='TODOS'&&(c.etapa||'por_contactar')!==cfg.etapa)return false;
+ if(cfg.tipo!=='TODOS'&&c.tipoCert!==cfg.tipo)return false;
+ if(cfg.persona!=='TODOS'&&c.tipoPersona!==cfg.persona)return false;
+ if(cfg.rango!=='TODOS'){const d=dias(c);if(d<0||d>+cfg.rango)return false}
+ return true}).sort(ORD[cfg.orden])}
+const opts=(o,sel)=>Object.entries(o).map(([v,l])=>`<option value="${v}"${v===sel?' selected':''}>${esc(l)}</option>`).join('');
+const sel=(f,label,o)=>`<label>${label}<select data-f="${f}">${opts(o,cfg[f])}</select></label>`;
+const arrow=f=>cfg.orden===f+'_asc'?' ▲':cfg.orden===f+'_desc'?' ▼':'';
+function pct(c){const a=D(c.fechaEmision||c.fechaVencimiento).getTime(),b=D(c.fechaVencimiento).getTime();return b<=a?100:Math.max(4,Math.min(100,(hoy()-a)/(b-a)*100))}
+function tabla(rows,sortable){
+ if(!rows.length)return '<div class="empty">No hay firmas con estos filtros.</div>';
+ const th=(f,l)=>sortable?`<th data-a="sort" data-s="${f}" tabindex="0">${l}${arrow(f)}</th>`:`<th>${l}</th>`;
+ return `<div class="tw"><table><thead><tr>${th('nombre','Propietario')}<th class="hm">Certificado</th>${th('venc','Vigencia')}<th>Días</th><th>Estado</th><th>Etapa</th><th></th></tr></thead><tbody>`+
+ rows.map(c=>{const e=estado(c);return `<tr><td><b>${esc(c.nombre)}</b><small>${esc(c.rfc)} · ${c.tipoPersona==='MORAL'?'Moral':'Física'}</small></td>
+ <td class="hm">${esc(c.tipoCert)}<small>${e==='VIGENTE'?esc((c.serie||'').slice(-12)):esc(IMP[c.tipoCert]||'')}</small></td>
+ <td>${fmt(c.fechaEmision)} a ${fmt(c.fechaVencimiento)}<div class="pb"><i style="width:${pct(c)}%;background:var(--${{VENCIDO:'er',URGENTE:'or',POR_VENCER:'wr',VIGENTE:'acc'}[e]})"></i></div></td>
+ <td>${diasTxt(c)}</td><td><span class="b ${e}">${ETQ[e]}</span></td><td><select class="et" data-et="${c.id}" aria-label="Etapa">${opts(ETAPAS,c.etapa||'por_contactar')}</select></td>
+ <td><div class="act"><button class="btn s" data-a="mail" data-id="${c.id}">Correo</button><button class="btn s" data-a="wa" data-id="${c.id}">WhatsApp</button><button class="btn s" data-a="edit" data-id="${c.id}">Editar</button><button class="btn s d" data-a="del" data-id="${c.id}" aria-label="Eliminar">✕</button></div></td></tr>`}).join('')+'</tbody></table></div>'}
+const kpi=(l,n,cls,go)=>`<div class="k ${cls}" ${go?`data-a="go" data-e="${go}"`:''}><span>${l}</span><b>${n}</b></div>`;
+const V={
+ panel(){const n=e=>certs.filter(c=>estado(c)===e).length;
+  const prox=certs.filter(c=>dias(c)<=90).sort(ORD.venc_asc);
+  const sa=certs.filter(c=>estado(c)!=='VIGENTE'&&(c.etapa||'por_contactar')==='por_contactar').length;
+  const cobrar=certs.filter(c=>dias(c)<=cfg.umbral&&c.etapa!=='renovada').reduce((t,c)=>t+(+c.cobro||0),0);
+  const y=new Date();y.setFullYear(y.getFullYear()-1);const ren=certs.reduce((t,c)=>t+(c.historial||[]).filter(h=>h.t.startsWith('Renovada')&&h.f>iso(y)).length,0);
+  const meses=[...Array(12)].map((_,i)=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+i);return{k:iso(d).slice(0,7),l:d.toLocaleDateString('es-MX',{month:'short'}),n:0}});
+  certs.forEach(c=>{const m=meses.find(x=>x.k===c.fechaVencimiento.slice(0,7));if(m)m.n++});const mx=Math.max(1,...meses.map(m=>m.n));
+  const r=cfg.respaldo?Math.round((hoy()-D(cfg.respaldo))/864e5):null;
+  return (certs.length&&(r===null||r>30)?`<div class="warn">${r===null?'Aún no has descargado un respaldo.':`Tu último respaldo fue hace ${r} días.`} Los datos viven solo en este navegador. <a href="#" data-a="nav" data-v="datos">Ir a Respaldo</a></div>`:'')+
+  `<div class="ks">${kpi('Total',certs.length,'')}${kpi('Vigentes',n('VIGENTE'),'ok','VIGENTE')}${kpi('Urgentes (7 d)',n('URGENTE'),'or','URGENTE')}${kpi(`Por vencer (hasta ${cfg.umbral} d)`,n('POR_VENCER'),'wr','POR_VENCER')}${kpi('Vencidas',n('VENCIDO'),'er','VENCIDO')}${kpi('Sin atender',sa,'er','VENCIDO')}${kpi('Por cobrar ('+cfg.umbral+' d)',money(cobrar),'')}${kpi('Renovadas (12 m)',ren,'ok')}</div>
+  <section class="card"><h3>Vencimientos de los próximos 12 meses</h3><div class="ch">${meses.map(m=>`<div class="cb" title="${m.n} vencen"><b>${m.n||''}</b><i style="height:${m.n/mx*80}%"></i><span>${m.l}</span></div>`).join('')}</div></section>
+  <section class="card"><h3>Próximos vencimientos (90 días)</h3>${certs.length?(prox.length?tabla(prox):'<div class="empty">Nada vence en los próximos 90 días.</div>'):'<div class="empty">Aún no hay firmas. Agrega la primera, importa un respaldo o mira cómo se ve con datos de ejemplo.<br><br><button class="btn p" data-a="demo">Cargar datos de ejemplo</button></div>'}</section>`},
+ boveda(){const l=lista();
+  return `<section class="card"><h3>Bóveda de firmas y sellos <span class="mt">(${l.length} de ${certs.length})</span></h3><div class="bar">
+  ${sel('orden','Ordenar por',ORD_ETQ)}
+  ${sel('estado','Estado',{TODOS:'Todos',VIGENTE:'Vigente',POR_VENCER:'Por vencer',URGENTE:'Urgente (7 d o menos)',VENCIDO:'Vencida'})}
+  ${sel('rango','Vence en',{TODOS:'Cualquier fecha',7:'7 días o menos',15:'15 días o menos',30:'30 días o menos',60:'60 días o menos',90:'90 días o menos'})}
+  ${sel('etapa','Etapa',{TODOS:'Todas',...ETAPAS})}
+  ${sel('tipo','Tipo',{TODOS:'Todos','e.firma':'e.firma',CSD:'CSD',Sello:'Sello'})}
+  ${sel('persona','Persona',{TODOS:'Todas',FISICA:'Física',MORAL:'Moral'})}
+  <button class="btn" data-a="clear">Limpiar filtros</button></div>${tabla(l,true)}</section>`},
+ clientes(){const g={};certs.forEach(c=>(g[c.rfc]=g[c.rfc]||{rfc:c.rfc,nombre:c.nombre,cs:[]}).cs.push(c));
+  const gs=Object.values(g).filter(x=>!q||norm(x.nombre+x.rfc).includes(norm(q))).sort((a,b)=>Math.min(...a.cs.map(dias))-Math.min(...b.cs.map(dias)));
+  if(!gs.length)return '<div class="empty">No hay clientes que mostrar.</div>';
+  return `<p class="mt">${gs.length} clientes, ordenados por el vencimiento más próximo.</p><div class="cg">`+gs.map(x=>{const u=[...x.cs].sort(ORD.venc_asc)[0];
+   return `<div class="card" style="margin:0"><b>${esc(x.nombre)}</b><div class="mt">${esc(x.rfc)}</div><div>${x.cs.map(c=>`<span class="chip b ${estado(c)}" data-a="edit" data-id="${c.id}">${esc(c.tipoCert)}: ${diasTxt(c)}</span>`).join('')}</div>
+   <div class="act" style="margin-top:12px"><button class="btn s" data-a="mail" data-id="${u.id}">Recordar por correo</button><button class="btn s" data-a="wa" data-id="${u.id}">WhatsApp</button><button class="btn s" data-a="rep" data-r="${esc(x.rfc)}">Reporte</button></div></div>`}).join('')+'</div>'},
+ recordatorios(){return `<section class="card"><h3>Recordatorios</h3>
+  <p class="mt">Los botones Correo y WhatsApp abren tu app con el mensaje ya escrito; tú lo envías. Variables: {{NOMBRE}} {{TIPO}} {{RFC}} {{SERIE}} {{FECHA}} {{DIAS}}.</p>
+  <label class="full">Marcar como "por vencer" desde (días)<input id="c-um" type="number" min="1" max="365" value="${cfg.umbral}" style="max-width:120px"></label><br>
+  <label class="full">Asunto del correo<input id="c-as" value="${esc(cfg.asunto)}"></label><br>
+  <label class="full">Mensaje de correo<textarea id="c-ma">${esc(cfg.mail)}</textarea></label><br>
+  <label class="full">Mensaje de WhatsApp<textarea id="c-wa">${esc(cfg.wa)}</textarea></label><br>
+  <button class="btn p" data-a="cfgsave">Guardar</button> <button class="btn" data-a="cfgdef">Restaurar originales</button></section>`},
+ datos(){return `<section class="card"><h3>Respaldo y exportación</h3>
+  <p class="mt">Todo se guarda solo en este navegador. Descarga un respaldo seguido y guárdalo en tu nube. No incluye archivos .key ni contraseñas.${cfg.respaldo?` Último respaldo: ${fmt(cfg.respaldo)}.`:''}</p>
+  <div class="act"><button class="btn p" data-a="expjson">Descargar respaldo (.json)</button><label class="btn">Restaurar respaldo<input id="imp" type="file" accept=".json" hidden></label>
+  <button class="btn" data-a="expcsv">Exportar a Excel (.csv)</button><button class="btn" data-a="ics">Calendario (.ics)</button><button class="btn" data-a="print">Imprimir lista</button><button class="btn d" data-a="wipe">Vaciar bóveda</button></div></section>`}};
+let lastV='';
+function render(){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===vista));const m=$('#main');m.innerHTML=V[vista]();
+ const nuevo=lastV!==vista,ch=m.querySelector('.ch');lastV=vista;
+ if(!nuevo||matchMedia('(prefers-reduced-motion:reduce)').matches){ch&&ch.classList.add('in');return}
+ m.style.animation='none';m.offsetWidth;m.style.animation='';
+ const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.1});
+ m.querySelectorAll('tbody tr').forEach((r,i)=>{r.classList.add('rv');r.style.transitionDelay=Math.min(i,8)*30+'ms';io.observe(r)});
+ if(ch)io.observe(ch);
+ m.querySelectorAll('.k b').forEach(b=>{const v=+b.textContent;if(!/^\d+$/.test(b.textContent)||!v)return;const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/600);b.textContent=Math.round(v*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)})(t0)})}
+addEventListener('scroll',()=>{const h=document.documentElement,m=h.scrollHeight-innerHeight;document.querySelector('header').classList.toggle('sc',scrollY>4);$('#prog').style.transform=`scaleX(${m>0?scrollY/m:0})`},{passive:true});
+function form(c={}){const v=k=>esc(c[k]??'');
+ return `<div class="ov" data-a="bg"><div class="mo" role="dialog" aria-modal="true"><h2>${c.id?'Editar firma':'Agregar firma'}</h2>
+ <label class="full">Archivo .cer (opcional). Se lee en tu navegador y llena RFC, titular, serie y fechas.<input type="file" id="f-cer" accept=".cer"></label>
+ <div class="g"><label>RFC<input id="f-rfc" value="${v('rfc')}" style="text-transform:uppercase"></label>
+ <label>Nombre o razón social<input id="f-nombre" value="${v('nombre')}"></label>
+ <label>Persona<select id="f-persona">${opts({FISICA:'Física',MORAL:'Moral'},c.tipoPersona)}</select></label>
+ <label>Tipo<select id="f-tipo">${opts({'e.firma':'e.firma',CSD:'CSD',Sello:'Sello'},c.tipoCert)}</select></label>
+ <label>Fecha de emisión<input type="date" id="f-ini" value="${v('fechaEmision')}"></label>
+ <label>Fecha de vencimiento<input type="date" id="f-fin" value="${v('fechaVencimiento')}"></label>
+ <label>Número de serie<input id="f-serie" value="${v('serie')}"></label>
+ <label>Correo del cliente<input id="f-mail" type="email" value="${v('emailCliente')}"></label>
+ <label>WhatsApp del cliente<input id="f-wa" value="${v('whatsapp')}"></label><label>Cobro por renovación (MXN)<input id="f-cobro" type="number" min="0" value="${v('cobro')}"></label></div><label class="full">Notas<textarea id="f-notas" style="min-height:60px">${v('notas')}</textarea></label>${(c.historial||[]).length?`<div class="note" style="margin:12px 0"><b>Historial</b><br>${c.historial.slice(0,8).map(h=>`${fmt(h.f)}: ${esc(h.t)}`).join('<br>')}</div>`:''}
+ <div class="row"><button class="btn" data-a="close">Cancelar</button><button class="btn p" data-a="save" data-id="${c.id||''}">Guardar</button></div>
+ <p class="note">No se guarda el archivo .key ni ninguna contraseña.</p></div></div>`}
+async function leerCer(f){const buf=new Uint8Array(await f.arrayBuffer()),txt=new TextDecoder().decode(buf);let asn;
+ if(txt.includes('-----BEGIN CERTIFICATE-----'))asn=forge.asn1.fromDer(forge.pki.pemToDer(txt.trim()));
+ else{let b='';for(const x of buf)b+=String.fromCharCode(x);asn=forge.asn1.fromDer(b)}
+ const ct=forge.pki.certificateFromAsn1(asn),cn=ct.subject.getField('CN');let rfc='';
+ for(const a of ct.subject.attributes){const m=String(a.value).toUpperCase().match(/([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{2,3})/);if(m){rfc=m[1];break}}
+ let serie=ct.serialNumber;const dec=serie.replace(/../g,h=>String.fromCharCode(parseInt(h,16)));if(/^\d{20}$/.test(dec))serie=dec;
+ return{ini:ct.validity.notBefore,fin:ct.validity.notAfter,cn:cn?String(cn.value):'',serie,rfc}}
+const fill=(t,c)=>t.replace(/{{NOMBRE}}/g,c.nombre).replace(/{{TIPO}}/g,c.tipoCert).replace(/{{RFC}}/g,c.rfc).replace(/{{SERIE}}/g,c.serie||'').replace(/{{FECHA}}/g,fmt(c.fechaVencimiento)).replace(/{{DIAS}}/g,dias(c));
+function recordar(c,canal){let url;
+ if(canal==='mail'){if(!c.emailCliente)return toast('Este cliente no tiene correo. Agrégalo en Editar.');
+  url=`mailto:${encodeURIComponent(c.emailCliente)}?subject=${encodeURIComponent(fill(cfg.asunto,c))}&body=${encodeURIComponent(fill(cfg.mail,c))}`}
+ else{let n=String(c.whatsapp||'').replace(/\D/g,'');if(n.length<10)return toast('Este cliente no tiene un WhatsApp válido. Agrégalo en Editar.');if(n.length===10)n='52'+n;
+  url=`https://wa.me/${n}?text=${encodeURIComponent(fill(cfg.wa,c))}`}
+ c.recordatoriosEnviados=(c.recordatoriosEnviados||0)+1;c.ultimoRecordatorio=iso(new Date());hist(c,'Recordatorio por '+(canal==='mail'?'correo':'WhatsApp'));if(!c.etapa||c.etapa==='por_contactar')c.etapa='contactado';save();
+ const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.click();toast('Mensaje preparado. Revisa y envíalo desde tu app.')}
+function bajar(nombre,txt,tipo){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:tipo}));a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+function guardar(id){const g=k=>$('#f-'+k).value.trim();
+ const o={rfc:g('rfc').toUpperCase(),nombre:g('nombre'),tipoPersona:$('#f-persona').value,tipoCert:$('#f-tipo').value,fechaEmision:g('ini'),fechaVencimiento:g('fin'),serie:g('serie'),emailCliente:g('mail'),whatsapp:g('wa'),cobro:+g('cobro')||0,notas:g('notas')};
+ if(!o.rfc||!o.nombre)return toast('Falta el RFC o el nombre.');
+ if(!o.fechaVencimiento)return toast('Falta la fecha de vencimiento. Captúrala o sube el .cer.');
+ if(o.fechaEmision&&o.fechaEmision>o.fechaVencimiento)return toast('La emisión no puede ser posterior al vencimiento.');
+ if(o.emailCliente&&!/^\S+@\S+\.\S+$/.test(o.emailCliente))return toast('El correo no tiene un formato válido.');
+ if(o.serie&&certs.some(c=>c.serie===o.serie&&c.id!==id))return toast('Ya existe un certificado con ese número de serie.');
+ if(!/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/.test(o.rfc)&&!confirm('El RFC no tiene el formato habitual. ¿Guardar de todos modos?'))return;
+ if(certs.some(c=>c.rfc===o.rfc&&c.tipoCert===o.tipoCert&&c.id!==id)&&!confirm(`Ya hay un ${o.tipoCert} para ${o.rfc}. ¿Agregar otro?`))return;
+ o.titular=o.nombre.toUpperCase();
+ if(id){Object.assign(certs.find(c=>c.id===id),o)}else certs.unshift({id:Date.now().toString(),recordatoriosEnviados:0,costoServicio:0,...o});
+ save();$('#modal').innerHTML='';render();toast('Firma guardada.')}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,c=certs.find(x=>x.id===t.dataset.id);
+ if(a==='bg'&&e.target!==t)return;
+ if(a==='nav'){e.preventDefault();vista=t.dataset.v;render()}
+ else if(a==='go'){cfg.estado=t.dataset.e;vista='boveda';save();render()}
+ else if(a==='sort'){const f=t.dataset.s;cfg.orden=cfg.orden===f+'_asc'?f+'_desc':f+'_asc';save();render()}
+ else if(a==='clear'){Object.assign(cfg,{estado:'TODOS',etapa:'TODOS',tipo:'TODOS',persona:'TODOS',rango:'TODOS'});q='';$('#q').value='';save();render()}
+ else if(a==='new')$('#modal').innerHTML=form();
+ else if(a==='edit'&&c)$('#modal').innerHTML=form(c);
+ else if(a==='close'||a==='bg')$('#modal').innerHTML='';
+ else if(a==='save')guardar(t.dataset.id);
+ else if((a==='mail'||a==='wa')&&c){recordar(c,a);render()}
+ else if(a==='del'&&c){if(confirm(`Se eliminará ${c.nombre} (${c.tipoCert}). ¿Continuar?`)){certs=certs.filter(x=>x!==c);save();render();toast('Eliminada.')}}
+ else if(a==='cfgsave'){cfg.umbral=Math.max(1,+$('#c-um').value||30);cfg.asunto=$('#c-as').value;cfg.mail=$('#c-ma').value;cfg.wa=$('#c-wa').value;save();toast('Recordatorios guardados.')}
+ else if(a==='cfgdef'){Object.assign(cfg,{umbral:30,asunto:DEF.asunto,mail:DEF.mail,wa:DEF.wa});save();render()}
+ else if(a==='expjson'){bajar(`respaldo-firmas-${iso(new Date())}.json`,JSON.stringify(certs,null,1),'application/json');cfg.respaldo=iso(new Date());save();render()}
+ else if(a==='expcsv'){const H=['RFC','Nombre','Persona','Tipo','Serie','Emisión','Vencimiento','Días','Estado','Correo','WhatsApp'];
+  const L=[...certs].sort(ORD.venc_asc).map(c=>[c.rfc,c.nombre,c.tipoPersona,c.tipoCert,c.serie,c.fechaEmision,c.fechaVencimiento,dias(c),ETQ[estado(c)],c.emailCliente,c.whatsapp].map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(','));
+  bajar(`vencimientos-${iso(new Date())}.csv`,'\ufeff'+[H.join(','),...L].join('\r\n'),'text/csv')}
+ else if(a==='ics'){const ev=certs.map(c=>{const d=c.fechaVencimiento.replace(/-/g,'');return `BEGIN:VEVENT\r\nUID:${c.id}@gestorfirmas\r\nDTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d+/g,'')}\r\nDTSTART;VALUE=DATE:${d}\r\nSUMMARY:Vence ${c.tipoCert} - ${c.nombre.replace(/[,;]/g,' ')}\r\nDESCRIPTION:RFC ${c.rfc}\r\nBEGIN:VALARM\r\nTRIGGER:-P30D\r\nACTION:DISPLAY\r\nDESCRIPTION:Vence en 30 días\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:Vence en 7 días\r\nEND:VALARM\r\nEND:VEVENT`}).join('\r\n');
+  bajar('vencimientos-firmas.ics',`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//BQ//Firmas//ES\r\n${ev}\r\nEND:VCALENDAR`,'text/calendar')}
+ else if(a==='tema'){cfg.tema=document.documentElement.dataset.t==='dark'?'light':'dark';save();applyTema()}
+ else if(a==='demo')demo();
+ else if(a==='rep'){const cs=certs.filter(x=>x.rfc===t.dataset.r).sort(ORD.venc_asc);const w=window.open('','_blank');if(!w)return toast('Permite ventanas emergentes para ver el reporte.');
+  w.document.write(`<!doctype html><meta charset=utf-8><title>Reporte ${esc(cs[0].nombre)}</title><style>body{font:15px/1.5 Geist,system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#14213d}h1{margin:0 0 4px}table{width:100%;border-collapse:collapse;margin:18px 0}th,td{text-align:left;padding:10px 6px;border-bottom:1px solid #dde2ea}.s{font-weight:600}</style><h1>Estado de tus firmas electrónicas</h1><p>${esc(cs[0].nombre)} · ${esc(cs[0].rfc)}<br>Al ${fmt(iso(new Date()))} · B&Q Servicios Contables</p><table><tr><th>Certificado<th>Vence<th>Días<th>Estado</tr>${cs.map(c=>`<tr><td>${esc(c.tipoCert)}<td>${fmt(c.fechaVencimiento)}<td>${dias(c)}<td class=s>${ETQ[estado(c)]}`).join('')}</table>${cs.filter(c=>estado(c)!=='VIGENTE').map(c=>`<p><b>${esc(c.tipoCert)}:</b> ${esc(IMP[c.tipoCert]||'')} Contáctanos para renovarla.</p>`).join('')}<script>onload=()=>print()<\/script>`);w.document.close()}
+ else if(a==='print')window.print();
+ else if(a==='wipe'){if(confirm('Se borrarán TODAS las firmas de este navegador. Descarga un respaldo antes. ¿Continuar?')){certs=[];save();render();toast('Bóveda vaciada.')}}
+});
+document.addEventListener('change',async e=>{const t=e.target;
+ if(t.dataset.et){cambiarEtapa(t.dataset.et,t.value);return}
+ if(t.dataset.f){cfg[t.dataset.f]=t.value;save();render()}
+ else if(t.id==='f-cer'&&t.files[0]){try{const r=await leerCer(t.files[0]);
+  if(r.rfc)$('#f-rfc').value=r.rfc;if(r.cn&&!$('#f-nombre').value)$('#f-nombre').value=r.cn;
+  $('#f-serie').value=r.serie;$('#f-ini').value=iso(r.ini);$('#f-fin').value=iso(r.fin);
+  $('#f-persona').value=r.rfc.length===12?'MORAL':'FISICA';toast('Datos leídos del .cer. Revísalos y guarda.')}
+  catch{toast('No se pudo leer el .cer. Captura los datos a mano.')}}
+ else if(t.id==='imp'&&t.files[0]){try{const a=JSON.parse(await t.files[0].text());
+  if(!Array.isArray(a)||a.some(c=>!c.rfc||!c.fechaVencimiento))throw 0;
+  if(!confirm(`El respaldo trae ${a.length} firmas. Se combinarán con las actuales (las del mismo id se reemplazan). ¿Continuar?`))return;
+  const m=new Map(certs.map(c=>[c.id,c]));a.forEach(c=>{delete c.diasRestantes;delete c.estado;m.set(String(c.id||Date.now()+Math.random()),{...c,id:String(c.id||Date.now()+Math.random())})});
+  certs=[...m.values()];save();render();toast('Respaldo restaurado.')}catch{toast('El archivo no es un respaldo válido.')}t.value=''}});
+$('#q').addEventListener('input',e=>{q=e.target.value;if(vista==='panel'||vista==='datos'||vista==='recordatorios')vista='boveda';render()});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();$('#q').focus()}if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.closest('.mo'))$('[data-a=save]').click();if(e.key==='Escape')$('#modal').innerHTML='';if(e.key==='Enter'&&e.target.dataset.a==='sort')e.target.click()});
+applyTema();render();
+</script>
+</body>
+</html>
